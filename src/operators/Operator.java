@@ -67,51 +67,16 @@ public class Operator implements DoubleBinaryOperator, Comparable<Operator> {
             elements.add(operationResult);
             return elements;
         }
-        class PriorityWrapper implements Comparable<PriorityWrapper> {
-            private static final double base = 1024;
-            public final OperationResult value;
-            private final boolean isLeft;
-            public final int depth;
-            public final double previousPriority;
-
-            PriorityWrapper(OperationResult value, boolean isLeft, int depth, double previousPriority) {
-                this.value = value;
-                this.isLeft = true;
-                this.depth = depth;
-                this.previousPriority = previousPriority;
-            }
-
-            private double priority() {
-                int multiplier;
-                if (isLeft) {
-                    multiplier = -1;
-                } else {
-                    multiplier = 1;
-                }
-                return previousPriority + multiplier * base / depth;
-            }
-
-            @Override
-            public int compareTo(PriorityWrapper o) {
-                return Double.compare(this.priority(), o.priority());
-            }
-        }
 
         Stack<OperationResult> toCheck = new Stack<>();
         toCheck.push(operationResult);
-//        PriorityQueue<PriorityWrapper> toCheck = new PriorityQueue<>();
-//        toCheck.add(new PriorityWrapper(operationResult, true, 1, 0));
         while (!toCheck.isEmpty()) {
             OperationResult element = toCheck.pop();
-//            PriorityWrapper wrappedElement = toCheck.remove();
-//            operators.OperationResult element = wrappedElement.value;
             if (element.isFirst()) {
                 elements.add(element);
             } else if (this.equals(element.operator)) {
                 toCheck.push(element.left);
                 toCheck.push(element.right);
-//                toCheck.add(new PriorityWrapper(element.left, true, wrappedElement.depth + 1, wrappedElement.priority()));
-//                toCheck.add(new PriorityWrapper(element.right, false, wrappedElement.depth + 1, wrappedElement.priority()));
             } else {
                 elements.add(element);
             }
@@ -130,32 +95,43 @@ public class Operator implements DoubleBinaryOperator, Comparable<Operator> {
         }
     }
 
-    protected OperationResult distribute(OperationResult operationResult) {
+    protected List<OperationResult> distributedElements(OperationResult operationResult) {
+        List<OperationResult> result = new LinkedList<>();
+        if (!isDistributive() || operationResult.isFirst()) {
+            result.add(operationResult);
+            return result;
+        };
         assert operationResult.left != null;
         assert operationResult.right != null;
         assert operationResult.operator != null;
-        if (!isDistributive()) return operationResult;
         List<OperationResult> leftElements = distributiveElements(operationResult.left);
         List<OperationResult> rightElements = distributiveElements(operationResult.right);
         if (leftElements.size() == 0 || rightElements.size() == 0) {
             throw new IllegalStateException();
         }
-        OperationResult result = null;
         for (OperationResult leftElement : leftElements) {
             for (OperationResult rightElement : rightElements) {
                 OperationResult combinedElement = fixOrder(this.apply(leftElement, rightElement));
-                if (Objects.isNull(result)) {
-                    result = combinedElement;
-                } else {
-                    result = result.apply(distributiveToOperator, combinedElement);
-                }
+                result.add(combinedElement);
             }
         }
         return result;
     }
 
+    protected OperationResult distribute(OperationResult operationResult) {
+        List<OperationResult> distributedElements = distributedElements(operationResult);
+        return distributedElements.stream()
+                .reduce((or1, or2) -> or1.apply(distributiveToOperator, or2))
+                .orElseThrow();
+    }
+
+    protected boolean shouldNotNormalize(OperationResult operationResult) {
+        return operationResult.isNormalized;
+    }
+
     public OperationResult normalize(OperationResult operationResult) {
         assertValidArgument(operationResult);
+        if (shouldNotNormalize(operationResult)) return operationResult;
         if (operationResult.isFirst()) {
             return operationResult;
         }
@@ -164,20 +140,15 @@ public class Operator implements DoubleBinaryOperator, Comparable<Operator> {
         OperationResult leftNormalized = operationResult.left.getNormalized();
         OperationResult rightNormalized = operationResult.right.getNormalized();
         OperationResult reconstructed = leftNormalized.apply(this, rightNormalized);
-//        if (reconstructed.toString().equals("2 - (7 + 3 * 9 + 8 * -1)")) {
-        if (reconstructed.toString().equals("-1 * (7 + 3 * 9 + 8 * -1)")) {
-            System.out.println("lol");
-        }
         OperationResult distributed = distribute(reconstructed);
         return fixOrder(postNormalize(distributed));
     }
 
-    private OperationResult fixOrder(OperationResult operationResult) {
-//        Optional<operators.OperationResult> result = sameLevelSwappableElements(operationResult).stream().map(or -> Objects.nonNull(or.operator) ? or.operator.fixOrder(or) : or).sorted().reduce(this::postNormalizeApply);
-        Optional<OperationResult> result = sameLevelSwappableElements(operationResult).stream().sorted().reduce(this::postNormalizeApply);
-        if (result.isEmpty())
-            throw new IllegalStateException(String.format("Normalization result for %s was empty!", operationResult));
-        return result.get();
+    protected OperationResult fixOrder(OperationResult operationResult) {
+        return sameLevelSwappableElements(operationResult).stream()
+                .sorted()
+                .reduce(this::postNormalizeApply)
+                .orElseThrow();
     }
 
     protected OperationResult postNormalize(OperationResult operationResult) {

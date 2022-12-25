@@ -3,6 +3,7 @@ package operators;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 public class OperationResult implements Comparable<OperationResult> {
     public final OperationResult left;
@@ -51,12 +52,13 @@ public class OperationResult implements Comparable<OperationResult> {
         return toString().hashCode();
     }
 
+    public boolean hasBeenNormalized() {
+        return Objects.nonNull(normalized);
+    }
+
     public OperationResult getNormalized() {
         if (isNormalized) return this;
-        if (Objects.isNull(normalized)) {
-            if (this.toString().equals("2 - (3 * 9 - 8 + 7)")) {
-                System.out.println("l");
-            }
+        if (!hasBeenNormalized()) {
             normalized = operator.normalize(this);
             normalized.isNormalized = true;
             if (!isNormalized && normalized.toString().equals(this.toString())) isNormalized = true;
@@ -68,7 +70,7 @@ public class OperationResult implements Comparable<OperationResult> {
 //        if (true) return false;
         if (Objects.isNull(other)) return false;
         if (!Utils.doubleEquals(this.resultValue, other.resultValue)) return false;
-        if (this.length() != other.length()) return false;
+//        if (this.length() != other.length()) return false;
         if (this.isFirst() && other.isFirst()) return true;
         if (this.operator.equals(other.operator) && (this.left.isEquivalent(other.left) && this.right.isEquivalent(other.right)))
             return true;
@@ -103,16 +105,32 @@ public class OperationResult implements Comparable<OperationResult> {
         return operationResult.toString();
     }
 
-    public HashSet<Double> usedOriginals() {
-        HashSet<Double> result;
-        if (!isFirst()) {
-            result = left.usedOriginals();
-            result.addAll(right.usedOriginals());
+    public HashMap<Double, Integer> usedOriginalsWithCounts() {
+        HashMap<Double, Integer> result;
+        if (isFirst()) {
+            result = new HashMap<>();
+            result.put(resultValue, 1);
         } else {
-            result = new HashSet<>();
-            result.add(resultValue);
+            result = left.usedOriginalsWithCounts();
+            HashMap<Double, Integer> rightUsedOriginals = right.usedOriginalsWithCounts();
+            for (Double key : rightUsedOriginals.keySet()) {
+                result.put(key, result.getOrDefault(key, 0) + rightUsedOriginals.get(key));
+            }
         }
         return result;
+    }
+
+    public Set<Double> usedOriginals() {
+        return usedOriginalsWithCounts().keySet();
+//        HashSet<Double> result;
+//        if (!isFirst()) {
+//            result = left.usedOriginals();
+//            result.addAll(right.usedOriginals());
+//        } else {
+//            result = new HashSet<>();
+//            result.add(resultValue);
+//        }
+//        return result;
     }
 
     public HashMap<Operator, Integer> usedOperations() {
