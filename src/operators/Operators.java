@@ -18,18 +18,27 @@ class Subtract extends Operator {
     }
 
     @Override
-    public OperationResult postNormalize(OperationResult operationResult) {
+    public OperationResult postNormalize(OperationResult operationResult, NormalizationState normalizationState) {
         assert operationResult.left != null;
         assert operationResult.right != null;
 
         OperationResult left = operationResult.left;
         OperationResult right = operationResult.right;
-        if (left.isFirst() && right.isFirst() && right.getRank() > left.getRank()) {
+        boolean flipForConsistency = right.getRank() > left.getRank();
+        if (flipForConsistency) {
             OperationResult temp = left;
             left = right;
             right = temp;
         }
-        return left.apply(ADD, MINUS_1_IGNORABLE.apply(MUL, right)).getNormalized();
+        OperationResult result = left.apply(ADD, MINUS_1_IGNORABLE.apply(MUL, right)).getNormalized(normalizationState);
+        if (flipForConsistency) {
+            result = MINUS_1_IGNORABLE.apply(MUL, result);
+            if (normalizationState.divideCounter == 0) {
+                result = MUL.distribute(result);
+            }
+            result = MUL.fixOrder(result);
+        }
+        return result;
     }
 
     @Override
@@ -70,12 +79,32 @@ class Multiply extends Operator {
         return result;
     }
 
+    OperationResult reduceOnes(OperationResult operationResult) {
+        if (operationResult.isFirst()) return operationResult;
+        OperationResult left = operationResult.left;
+        OperationResult right = operationResult.right;
+        if (left.isFirst() && Utils.doubleEquals(left.resultValue, 1)) return right;
+        if (right.isFirst() && Utils.doubleEquals(right.resultValue, 1)) return left;
+        return operationResult;
+    }
+
+    protected OperationResult fixOrder(OperationResult operationResult, boolean shouldRemoveDuplicateMinusOnes) {
+        if (shouldRemoveDuplicateMinusOnes) return super.fixOrder(operationResult);
+        return sameLevelSwappableElements(operationResult).stream()
+                .sorted()
+                .reduce((or1, or2) -> postNormalizeApply(or1, or2, false))
+                .orElseThrow();
+    }
+
     @Override
     public OperationResult postNormalizeApply(OperationResult left, OperationResult right) {
+        return postNormalizeApply(left, right, true);
+    }
+
+    public OperationResult postNormalizeApply(OperationResult left, OperationResult right, boolean shouldRemoveDuplicateMinusOnes) {
         OperationResult result = super.postNormalizeApply(left, right);
-        if (left.isFirst() && Utils.doubleEquals(left.resultValue, 1)) result = right;
-        if (right.isFirst() && Utils.doubleEquals(right.resultValue, 1)) result = left;
-        result = removeDuplicateMinusOnes(result);
+        result = reduceOnes(result);
+        if (shouldRemoveDuplicateMinusOnes) result = removeDuplicateMinusOnes(result);
         return result;
     }
 }
@@ -89,15 +118,36 @@ class Divide extends Operator {
         super((double left, double right) -> left / right, "/", 20, false);
     }
 
+    private boolean isOne(OperationResult operationResult) {
+        return operationResult.isFirst() && Utils.doubleEquals(operationResult.resultValue, 1);
+    }
+
+    private boolean isMinusOne(OperationResult operationResult) {
+        return operationResult.isFirst() && Utils.doubleEquals(operationResult.resultValue, -1);
+    }
+
     private boolean isOneDivision(OperationResult operationResult) {
         if (operationResult.isFirst()) return false;
         assert operationResult.right != null;
-        return (MUL.equals(operationResult.operator) && ONE.isEquivalent(operationResult.right.left) && this.equals(operationResult.right.operator))
-                || (this.equals(operationResult.operator) && ONE.isEquivalent(operationResult.left));
+        return (MUL.equals(operationResult.operator) && ONE.isEquivalent(operationResult.right.left) && this.equals(operationResult.right.operator));
+    }
+
+    private boolean isStraightOneDivision(OperationResult operationResult) {
+        if (operationResult.isFirst()) return false;
+        assert operationResult.right != null;
+        assert operationResult.left != null;
+        return this.equals(operationResult.operator) && isOne(operationResult.left);
     }
 
     @Override
-    protected OperationResult postNormalize(OperationResult operationResult) {
+    protected OperationResult preNormalize(OperationResult operationResult, NormalizationState normalizationState) {
+        operationResult = super.preNormalize(operationResult, normalizationState);
+        normalizationState.divideCounter++;
+        return operationResult;
+    }
+
+    @Override
+    protected OperationResult postNormalize(OperationResult operationResult, NormalizationState normalizationState) {
         assert operationResult.left != null;
         assert operationResult.right != null;
         OperationResult result = operationResult.left;
@@ -106,19 +156,34 @@ class Divide extends Operator {
         assert rightElements.size() > 0;
 
         for (OperationResult rightElement : rightElements) {
-            if (isOneDivision(rightElement)) {
+            if (isOne(rightElement) || isMinusOne(rightElement)) {
+                result = result.apply(MUL, rightElement);
+            } else if (isStraightOneDivision(rightElement)) {
                 result = result.apply(MUL, rightElement.right);
-            } else {
+            } else if (isOneDivision(rightElement)) {
+                assert rightElement.right != null;
+                result = result.apply(MUL, rightElement.right.right);
+            } else  {
                 result = result.apply(MUL, ONE.apply(this, rightElement));
             }
         }
 
-        return MUL.fixOrder(result);
-//        return ADD.fixOrder(
-//                MUL.distributedElements(result).stream()
-//                        .reduce((or1, or2) -> MUL.distributiveToOperator.apply(or1, MUL.fixOrder(or2)))
-//                        .orElseThrow()
-//        );
+        if (normalizationState.divideCounter == 1) {
+            NormalizationState newNormalizationState = new NormalizationState();
+            newNormalizationState.divideCounter = normalizationState.divideCounter;
+            newNormalizationState.forceReNormalize = true;
+            result = result.getNormalized(newNormalizationState);
+//            result = result.getNormalized(normalizationState);
+//            result = ADD.fixOrder(
+//                    MUL.distributedElements(result).stream()
+//                            .reduce((or1, or2) -> MUL.distributiveToOperator.apply(or1, MUL.fixOrder(or2)))
+//                            .orElseThrow()
+//            );
+        } else {
+            result = MUL.fixOrder(result);
+        }
+        normalizationState.divideCounter--;
+        return result;
     }
 
     @Override

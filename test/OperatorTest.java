@@ -127,6 +127,73 @@ public class OperatorTest {
     }
 
     @Test
+    public void multiplicationTestDistributeLeft() {
+        OperationResult two = new OperationResult(2);
+        OperationResult three = new OperationResult(3);
+        OperationResult five = new OperationResult(5);
+
+        // (2 - 3) * 5
+        OperationResult a = two.apply(SUB, three).apply(MUL, five);
+        // 2 * 5 - 5 * 3
+        OperationResult b = two.apply(MUL, five).apply(SUB, five.apply(MUL, three));
+
+        assertEquivalenceAndNormalization(a, b);
+    }
+
+    @Test
+    public void multiplicationTestDistributeRight() {
+        OperationResult two = new OperationResult(2);
+        OperationResult three = new OperationResult(3);
+        OperationResult five = new OperationResult(5);
+
+        // 2 * (3 - 5)
+        OperationResult a = two.apply(MUL, three.apply(SUB, five));
+        // 2 * 3 - 2 * 5
+        OperationResult b = two.apply(MUL, three).apply(SUB, two.apply(MUL, five));
+
+        assertEquivalenceAndNormalization(a, b);
+    }
+
+    @Test
+    public void multiplicationTestDistribute2() {
+        OperationResult two = new OperationResult(2);
+        OperationResult three = new OperationResult(3);
+        OperationResult five = new OperationResult(5);
+        OperationResult seven = new OperationResult(7);
+
+        // (2 + 3) * (5 - 7)
+        OperationResult a = two.apply(ADD, three).apply(MUL, five.apply(SUB, seven));
+        // 2 * 5 - 7 * 3
+        // + 5 * 3 - 7 * 2
+        OperationResult b = two.apply(MUL, five).apply(SUB, seven.apply(MUL, three)).
+                apply(ADD, five.apply(MUL, three)).apply(SUB, seven.apply(MUL, two));
+
+        assertEquivalenceAndNormalization(a, b);
+    }
+
+    @Test
+    public void multiplicationTestDistribute3() {
+        OperationResult two = new OperationResult(2);
+        OperationResult three = new OperationResult(3);
+        OperationResult five = new OperationResult(5);
+        OperationResult seven = new OperationResult(7);
+        OperationResult eleven = new OperationResult(11);
+        OperationResult thirteen = new OperationResult(13);
+
+        // (2 - 3 + 5) * (7 + 11 - 13)
+        OperationResult a = two.apply(SUB, three).apply(ADD, five).apply(MUL,
+                seven.apply(ADD, eleven).apply(SUB, thirteen));
+        // 2 * 7 - 3 * 7 + 5 * 7
+        // + 2 * 11 - 3 * 11 + 5 * 11
+        // - 2 * 13 + 3 * 13 - 5 * 13
+        OperationResult b = two.apply(MUL, seven).apply(SUB, three.apply(MUL, seven)).apply(ADD, five.apply(MUL, seven))
+                .apply(ADD, two.apply(MUL, eleven)).apply(SUB, three.apply(MUL, eleven)).apply(ADD, five.apply(MUL, eleven))
+                .apply(SUB, two.apply(MUL, thirteen)).apply(ADD, three.apply(MUL, thirteen)).apply(SUB, five.apply(MUL, thirteen));
+
+        assertEquivalenceAndNormalization(a, b);
+    }
+
+    @Test
     public void divisionTest1() {
         OperationResult two = new OperationResult(2);
         OperationResult seven = new OperationResult(7);
@@ -145,15 +212,15 @@ public class OperatorTest {
         OperationResult two = new OperationResult(2);
         OperationResult seven = new OperationResult(7);
 
-        OperationResult a = one.apply(DIV, seven).getNormalized();
+        OperationResult a = two.apply(DIV, seven).getNormalized();
 
-        assertEquals(two, a.left);
+        assertEquals(two, a.right);
         assertEquals(MUL, a.operator);
-        assertNotNull(a.right);
-        assert a.right.left != null;
-        assertEquals(one, a.right.left);
-        assertEquals(DIV, a.right.operator);
-        assertEquals(seven, a.right.right);
+        assertNotNull(a.left);
+        assert a.left.left != null;
+        assertEquals(one, a.left.left);
+        assertEquals(DIV, a.left.operator);
+        assertEquals(seven, a.left.right);
     }
 
     @Test
@@ -200,13 +267,5 @@ public class OperatorTest {
         OperationResult b = new OperationResult(5).apply(MUL, new OperationResult(1).apply(DIV, 3));  // 5 * (1 / 3)
 
         assertEquivalenceAndNormalization(a, b);
-    }
-
-    @Test
-    public void dev() {
-        // 7 / ((9 - 8) / 2)
-        OperationResult or = new OperationResult(7).apply(DIV, new OperationResult(9).apply(SUB, 8).apply(DIV, 2));
-        System.out.println(or);
-        System.out.println(or.getNormalized());
     }
 }

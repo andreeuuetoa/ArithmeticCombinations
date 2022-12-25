@@ -57,10 +57,13 @@ public class OperationResult implements Comparable<OperationResult> {
     }
 
     public OperationResult getNormalized() {
+        return getNormalized(new NormalizationState());
+    }
+
+    OperationResult getNormalized(NormalizationState normalizationState) {
         if (isNormalized) return this;
-        if (!hasBeenNormalized()) {
-            normalized = operator.normalize(this);
-            normalized.isNormalized = true;
+        if (!hasBeenNormalized() || normalizationState.forceReNormalize) {
+            normalized = operator.normalize(this, normalizationState);
             if (!isNormalized && normalized.toString().equals(this.toString())) isNormalized = true;
         }
         return normalized;
@@ -148,5 +151,11 @@ public class OperationResult implements Comparable<OperationResult> {
         if (Objects.isNull(o))
             throw new IllegalArgumentException(String.format("Can't compare %s to null!", this.getClass().getName()));
         return Integer.compare(getRank(), o.getRank());
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof OperationResult other)) return false;
+        return resultValue.equals(other.resultValue);
     }
 }

@@ -56,7 +56,8 @@ public class Operator implements DoubleBinaryOperator, Comparable<Operator> {
     }
 
     protected void assertValidArgument(OperationResult operationResult) {
-        if (Objects.isNull(operationResult)) throw new IllegalArgumentException("operators.OperationResult must not be null!");
+        if (Objects.isNull(operationResult))
+            throw new IllegalArgumentException("operators.OperationResult must not be null!");
         if (!this.equals(operationResult.operator))
             throw new IllegalArgumentException(String.format("Expected Operation %s from operators.OperationResult %s, got %s", this, operationResult, operationResult.operator));
     }
@@ -100,7 +101,7 @@ public class Operator implements DoubleBinaryOperator, Comparable<Operator> {
         if (!isDistributive() || operationResult.isFirst()) {
             result.add(operationResult);
             return result;
-        };
+        }
         assert operationResult.left != null;
         assert operationResult.right != null;
         assert operationResult.operator != null;
@@ -129,7 +130,8 @@ public class Operator implements DoubleBinaryOperator, Comparable<Operator> {
         return operationResult.isNormalized;
     }
 
-    public OperationResult normalize(OperationResult operationResult) {
+    public OperationResult normalize(OperationResult operationResult, NormalizationState normalizationState) {
+        operationResult = preNormalize(operationResult, normalizationState);
         assertValidArgument(operationResult);
         if (shouldNotNormalize(operationResult)) return operationResult;
         if (operationResult.isFirst()) {
@@ -137,11 +139,14 @@ public class Operator implements DoubleBinaryOperator, Comparable<Operator> {
         }
         assert operationResult.left != null;
         assert operationResult.right != null;
-        OperationResult leftNormalized = operationResult.left.getNormalized();
-        OperationResult rightNormalized = operationResult.right.getNormalized();
+        OperationResult leftNormalized = operationResult.left.getNormalized(normalizationState);
+        OperationResult rightNormalized = operationResult.right.getNormalized(normalizationState);
         OperationResult reconstructed = leftNormalized.apply(this, rightNormalized);
         OperationResult distributed = distribute(reconstructed);
-        return fixOrder(postNormalize(distributed));
+        OperationResult result = postNormalize(distributed, normalizationState);
+        if (result.isFirst()) return result;
+        assert result.operator != null;
+        return result.operator.fixOrder(result);
     }
 
     protected OperationResult fixOrder(OperationResult operationResult) {
@@ -151,7 +156,12 @@ public class Operator implements DoubleBinaryOperator, Comparable<Operator> {
                 .orElseThrow();
     }
 
-    protected OperationResult postNormalize(OperationResult operationResult) {
+    protected OperationResult preNormalize(OperationResult operationResult, NormalizationState normalizationState) {
+        return operationResult;
+    }
+
+    protected OperationResult postNormalize(OperationResult operationResult, NormalizationState normalizationState) {
+        operationResult.isNormalized = true;
         return operationResult;
     }
 }
