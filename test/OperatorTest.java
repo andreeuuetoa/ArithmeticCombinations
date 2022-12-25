@@ -139,6 +139,7 @@ public class OperatorTest {
         assertEquivalenceAndNormalization(a, b);
     }
 
+    @Test
     public void divisionTestInvertSimple() {
         OperationResult one = new OperationResult(1);
         OperationResult two = new OperationResult(2);
