@@ -59,8 +59,24 @@ class ArithmeticCombinationsTest {
                 two.apply(ADD, three).apply(ADD, four).apply(ADD, five),  // 2 + 3 + 4 + 5
                 eight.apply(MUL, seven).apply(SUB, fortyFour.apply(SUB, two)),  // 8 * 7 - (44 - 2)
                 two.apply(SUB, fortyFour).apply(ADD, seven.apply(MUL, eight)),  // 2 - 44 + 7 * 8
-                seven.apply(SUB, two.apply(SUB, four)).apply(ADD, five)  // 7 - (2 - 4) + 5
-//                seven.apply(DIV, nine.apply(SUB, eight).apply(DIV, two))  // 7 / ((9 - 8) / 2)
+                seven.apply(SUB, two.apply(SUB, four)).apply(ADD, five),  // 7 - (2 - 4) + 5
+                seven.apply(DIV, nine.apply(SUB, eight).apply(DIV, two))  // 7 / ((9 - 8) / 2)
         );
+    }
+
+    @Test
+    public void testNoParentheses() {
+        List<Double> numbers = Stream.of(2, 3, 4, 5, 7, 8, 9, 44, 55).map(Integer::doubleValue).toList();
+
+        Collection<OperationResult> result = ArithmeticCombinations.operationCombinations(
+                DEFAULT_OPERATORS,
+                numbers,
+                4,
+                14,
+                false,
+                false
+        );
+
+        assertEquals(71, result.size());
     }
 }
