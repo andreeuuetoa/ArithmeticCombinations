@@ -50,13 +50,20 @@ class Multiply extends Operator {
         List<OperationResult> elements = sameLevelSwappableElements(operationResult);
         List<OperationResult> minusOnes = elements.stream().filter(or -> Subtract.MINUS_1_IGNORABLE == or).toList();
 
+        if (elements.isEmpty()) throw new IllegalStateException();
+
         for (int i = 0; i < minusOnes.size() / 2; i++) {
             elements.remove(minusOnes.get(i));
             elements.remove(minusOnes.get(i + 1));
         }
 
-        OperationResult result = elements.get(0);
-        elements.remove(0);
+        OperationResult result;
+        if (elements.isEmpty()) {
+            result = new OperationResult(1);
+        } else {
+            result = elements.get(0);
+            elements.remove(0);
+        }
         for (OperationResult element : elements) {
             result = apply(result, element);
         }

@@ -72,6 +72,7 @@ public class OperationResult implements Comparable<OperationResult> {
         if (!Utils.doubleEquals(this.resultValue, other.resultValue)) return false;
 //        if (this.length() != other.length()) return false;
         if (this.isFirst() && other.isFirst()) return true;
+        if (this.isFirst() != other.isFirst()) return false;
         if (this.operator.equals(other.operator) && (this.left.isEquivalent(other.left) && this.right.isEquivalent(other.right)))
             return true;
         return this.getNormalized().toString().equals(other.getNormalized().toString());
