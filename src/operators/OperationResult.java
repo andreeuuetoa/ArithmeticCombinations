@@ -67,13 +67,12 @@ public class OperationResult implements Comparable<OperationResult> {
     }
 
     public boolean isEquivalent(OperationResult other) {
-//        if (true) return false;
         if (Objects.isNull(other)) return false;
         if (!Utils.doubleEquals(this.resultValue, other.resultValue)) return false;
-//        if (this.length() != other.length()) return false;
         if (this.isFirst() && other.isFirst()) return true;
-        if (this.isFirst() != other.isFirst()) return false;
-        if (this.operator.equals(other.operator) && (this.left.isEquivalent(other.left) && this.right.isEquivalent(other.right)))
+        if (!this.isFirst() && !other.isFirst()
+                && this.operator.equals(other.operator)
+                && this.left.isEquivalent(other.left) && this.right.isEquivalent(other.right))
             return true;
         return this.getNormalized().toString().equals(other.getNormalized().toString());
     }
@@ -123,15 +122,6 @@ public class OperationResult implements Comparable<OperationResult> {
 
     public Set<Double> usedOriginals() {
         return usedOriginalsWithCounts().keySet();
-//        HashSet<Double> result;
-//        if (!isFirst()) {
-//            result = left.usedOriginals();
-//            result.addAll(right.usedOriginals());
-//        } else {
-//            result = new HashSet<>();
-//            result.add(resultValue);
-//        }
-//        return result;
     }
 
     public HashMap<Operator, Integer> usedOperations() {
