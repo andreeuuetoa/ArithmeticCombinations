@@ -89,15 +89,11 @@ class Divide extends Operator {
         super((double left, double right) -> left / right, "/", 20, false);
     }
 
-    @Override
-    protected boolean shouldNotNormalize(OperationResult operationResult) {
-        return super.shouldNotNormalize(operationResult) || isOneDivision(operationResult);
-    }
-
     private boolean isOneDivision(OperationResult operationResult) {
         if (operationResult.isFirst()) return false;
         assert operationResult.right != null;
-        return MUL.equals(operationResult.operator) && ONE == operationResult.right.left && this.equals(operationResult.right.operator);
+        return (MUL.equals(operationResult.operator) && ONE.isEquivalent(operationResult.right.left) && this.equals(operationResult.right.operator))
+                || (this.equals(operationResult.operator) && ONE.isEquivalent(operationResult.left));
     }
 
     @Override
@@ -117,11 +113,12 @@ class Divide extends Operator {
             }
         }
 
-        return ADD.fixOrder(
-                MUL.distributedElements(result).stream()
-                        .reduce((or1, or2) -> MUL.distributiveToOperator.apply(or1, MUL.fixOrder(or2)))
-                        .orElseThrow()
-        );
+        return MUL.fixOrder(result);
+//        return ADD.fixOrder(
+//                MUL.distributedElements(result).stream()
+//                        .reduce((or1, or2) -> MUL.distributiveToOperator.apply(or1, MUL.fixOrder(or2)))
+//                        .orElseThrow()
+//        );
     }
 
     @Override
