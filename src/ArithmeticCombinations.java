@@ -38,8 +38,6 @@ public class ArithmeticCombinations {
         HashSet<OperationResult> potentialArguments = new HashSet<>(numbers.stream().map(OperationResult::new).toList());
 
         for (int length = 1; length < numsAmount; length++) {
-            System.out.println(length);
-            System.out.println(potentialArguments.size());
             int lengthForLambda = length;
             for (OperationResult base : potentialArguments.stream().filter(or -> or.length() == lengthForLambda).toList()) {
                 for (OperationResult other : potentialArguments.stream().filter(or -> or.length() <= numsAmount - lengthForLambda && (reUseAllowed || Collections.disjoint(base.usedOriginals(), or.usedOriginals()))).toList()) {
