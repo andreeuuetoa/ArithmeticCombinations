@@ -17,7 +17,7 @@ public class ArithmeticCombinations {
                 numbers,
                 4,
                 14,
-                true,
+                false,
                 false
         );
 
