@@ -163,7 +163,7 @@ class Divide extends Operator {
             } else if (isOneDivision(rightElement)) {
                 assert rightElement.right != null;
                 result = result.apply(MUL, rightElement.right.right);
-            } else  {
+            } else {
                 result = result.apply(MUL, ONE.apply(this, rightElement));
             }
         }
@@ -175,8 +175,6 @@ class Divide extends Operator {
         }
         normalizationState.divideCounter--;
         return super.postNormalize(result, normalizationState);
-
-        // TODO: convert division by one into multiplication by one
     }
 
     @Override

@@ -234,12 +234,12 @@ public class OperatorTest {
     @Test
     public void divisionTestNegative() {
         OperationResult two = new OperationResult(2);
-        OperationResult three = new OperationResult(3);
         OperationResult five = new OperationResult(5);
-        OperationResult seven = new OperationResult(7);
+        OperationResult eleven = new OperationResult(11);
+        OperationResult twentyThree = new OperationResult(23);
 
-        OperationResult a = two.apply(SUB, three).apply(DIV, five.apply(SUB, seven));  // (2 - 3) / (5 - 7)
-        OperationResult b = three.apply(SUB, two).apply(DIV, seven.apply(SUB, five));  // (3 - 2) / (7 - 5)
+        OperationResult a = two.apply(SUB, five).apply(DIV, eleven.apply(SUB, twentyThree));  // (2 - 5) / (11 - 23)
+        OperationResult b = five.apply(SUB, two).apply(DIV, twentyThree.apply(SUB, eleven));  // (5 - 2) / (23 - 11)
 
         assertEquivalenceAndNormalization(a, b);
     }
@@ -285,19 +285,16 @@ public class OperatorTest {
     }
 
     @Test
-    public void dev() {
-        OperationResult a = new OperationResult(5).apply(SUB, 8);
-        System.out.println(a);
-        System.out.println(a.getNormalized());
+    public void divisionMore() {
+        OperationResult two = new OperationResult(2);
+        OperationResult four = new OperationResult(4);
+        OperationResult five = new OperationResult(5);
+        OperationResult seven = new OperationResult(7);
 
-        OperationResult b = new OperationResult(8).apply(SUB, 5);
-        System.out.println(b);
-        System.out.println(b.getNormalized());
+        OperationResult a = seven.apply(DIV, five.apply(SUB, four).apply(DIV, two));  // 7 / ((5 - 4) / 2)
+        OperationResult b = two.apply(MUL, seven.apply(DIV, five.apply(SUB, four)));  // 2 * (7 / (5 - 4))
+        OperationResult c = two.apply(DIV, five.apply(SUB, four).apply(DIV, seven));  // 2 / ((5 - 4) / 7)
 
-
-        // 7 / ((5 - 4) / 2)
-        // 2 * (7 / (5 - 4))
-        // 2 / ((5 - 4) / 7)
-        // 2 * 7 * (5 - 4)
+        assertEquivalenceAndNormalization(a, b, c);
     }
 }
