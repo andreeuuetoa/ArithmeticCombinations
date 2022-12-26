@@ -38,7 +38,7 @@ class Subtract extends Operator {
             }
             result = MUL.fixOrder(result);
         }
-        return result;
+        return super.postNormalize(result, normalizationState);
     }
 
     @Override
@@ -169,21 +169,14 @@ class Divide extends Operator {
         }
 
         if (normalizationState.divideCounter == 1) {
-            NormalizationState newNormalizationState = new NormalizationState();
-            newNormalizationState.divideCounter = normalizationState.divideCounter;
-            newNormalizationState.forceReNormalize = true;
-            result = result.getNormalized(newNormalizationState);
-//            result = result.getNormalized(normalizationState);
-//            result = ADD.fixOrder(
-//                    MUL.distributedElements(result).stream()
-//                            .reduce((or1, or2) -> MUL.distributiveToOperator.apply(or1, MUL.fixOrder(or2)))
-//                            .orElseThrow()
-//            );
+            result = result.getNormalized(normalizationState);
         } else {
             result = MUL.fixOrder(result);
         }
         normalizationState.divideCounter--;
-        return result;
+        return super.postNormalize(result, normalizationState);
+
+        // TODO: convert division by one into multiplication by one
     }
 
     @Override

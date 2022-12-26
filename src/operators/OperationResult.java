@@ -10,7 +10,6 @@ public class OperationResult implements Comparable<OperationResult> {
     public final OperationResult right;
     public final Double resultValue;
     public final Operator operator;
-    private OperationResult normalized = null;
     boolean isNormalized = false;
 
     public OperationResult(double value) {
@@ -52,21 +51,13 @@ public class OperationResult implements Comparable<OperationResult> {
         return toString().hashCode();
     }
 
-    public boolean hasBeenNormalized() {
-        return Objects.nonNull(normalized);
-    }
-
     public OperationResult getNormalized() {
         return getNormalized(new NormalizationState());
     }
 
     OperationResult getNormalized(NormalizationState normalizationState) {
         if (isNormalized) return this;
-        if (!hasBeenNormalized() || normalizationState.forceReNormalize) {
-            normalized = operator.normalize(this, normalizationState);
-            if (!isNormalized && normalized.toString().equals(this.toString())) isNormalized = true;
-        }
-        return normalized;
+        return operator.normalize(this, normalizationState);
     }
 
     public boolean isEquivalent(OperationResult other) {
@@ -125,21 +116,6 @@ public class OperationResult implements Comparable<OperationResult> {
 
     public Set<Double> usedOriginals() {
         return usedOriginalsWithCounts().keySet();
-    }
-
-    public HashMap<Operator, Integer> usedOperations() {
-        HashMap<Operator, Integer> result;
-        if (isFirst()) {
-            result = new HashMap<>();
-        } else {
-            result = left.usedOperations();
-            HashMap<Operator, Integer> rightOperations = right.usedOperations();
-            for (Operator operator : rightOperations.keySet()) {
-                result.put(operator, result.getOrDefault(operator, 0) + rightOperations.get(operator));
-            }
-            result.put(this.operator, result.getOrDefault(this.operator, 0) + 1);
-        }
-        return result;
     }
 
     public boolean containsParentheses() {

@@ -42,7 +42,7 @@ public class ArithmeticCombinations {
             for (OperationResult base : potentialArguments.stream().filter(or -> or.length() == lengthForLambda).toList()) {
                 for (OperationResult other : potentialArguments.stream().filter(or -> or.length() <= numsAmount - lengthForLambda && (reUseAllowed || Collections.disjoint(base.usedOriginals(), or.usedOriginals()))).toList()) {
                     for (Operator operator : operators) {
-                        for (OperationResult newResult : List.of(base.apply(operator, other))) {
+                        for (OperationResult newResult : List.of(base.apply(operator, other), other.apply(operator, base))) {
                             if (newResult.length() == numsAmount && !Utils.doubleEquals(newResult.resultValue, target))
                                 continue;
                             if (potentialArguments.stream().noneMatch(newResult::isEquivalent) && parenthesesCheck(newResult, parenthesesAllowed))

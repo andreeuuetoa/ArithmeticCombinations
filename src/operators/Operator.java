@@ -161,7 +161,6 @@ public class Operator implements DoubleBinaryOperator, Comparable<Operator> {
     }
 
     protected OperationResult postNormalize(OperationResult operationResult, NormalizationState normalizationState) {
-        operationResult.isNormalized = true;
         return operationResult;
     }
 }
