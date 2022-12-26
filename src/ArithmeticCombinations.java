@@ -12,20 +12,26 @@ public class ArithmeticCombinations {
     public static void main(String[] args) {
         List<Double> numbers = Stream.of(2, 3, 4, 5, 7, 8, 9, 44, 55).map(Integer::doubleValue).toList();
 
+        long start = System.currentTimeMillis();
+
         Collection<OperationResult> result = operationCombinations(
                 DEFAULT_OPERATORS,
                 numbers,
                 4,
                 14,
-                false,
+                true,
                 false
         );
+
+        long end = System.currentTimeMillis();
 
         System.out.printf("Combinations found: %d%n%n", result.size());
 
         for (OperationResult operationResult : result) {
             System.out.println(operationResult);
         }
+
+        System.out.printf("%nRan in %dms", end - start);
 
         System.out.printf("%nCombinations found: %d%n", result.size());
     }
