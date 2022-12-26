@@ -33,7 +33,7 @@ class ArithmeticCombinationsTest {
     }
 
     @Test
-    public void test1() {
+    public void testParentheses() {
         OperationResult two = new OperationResult(2);
         OperationResult three = new OperationResult(3);
         OperationResult five = new OperationResult(5);
@@ -60,8 +60,12 @@ class ArithmeticCombinationsTest {
                 eight.apply(MUL, seven).apply(SUB, fortyFour.apply(SUB, two)),  // 8 * 7 - (44 - 2)
                 two.apply(SUB, fortyFour).apply(ADD, seven.apply(MUL, eight)),  // 2 - 44 + 7 * 8
                 seven.apply(SUB, two.apply(SUB, four)).apply(ADD, five),  // 7 - (2 - 4) + 5
-                seven.apply(DIV, nine.apply(SUB, eight).apply(DIV, two))  // 7 / ((9 - 8) / 2)
+                seven.apply(DIV, nine.apply(SUB, eight).apply(DIV, two)),  // 7 / ((9 - 8) / 2)
+                fortyFour.apply(SUB, two.apply(MUL, seven.apply(ADD, eight))),  // 44 - 2 * (7 + 8)
+                five.apply(DIV, three.apply(SUB, two)).apply(ADD, nine)  // 5 / (3 - 2) + 9
         );
+
+        assertEquals(231, result.size());
     }
 
     @Test

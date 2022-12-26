@@ -53,11 +53,6 @@ public class OperatorTest {
     }
 
     private void assertNormalizationDoesNotChangeOriginal(OperationResult original) {
-        if (original.hasBeenNormalized())
-            throw new IllegalArgumentException(String.format(
-                    "Expected %s that had not yet been normalized, but got normalized '%s'!",
-                    OperationResult.class, original
-            ));
         String preString = original.toString();
         original.getNormalized();
         String postString = original.toString();
@@ -73,6 +68,9 @@ public class OperatorTest {
             assertNormalizationDoesNotChangeOriginal(original);
             assertNormalizationIsReflexive(original);
             assertNormalizedFormContainsOriginalNumbers(original);
+            System.out.printf("Original: %s%n", original);
+            System.out.printf("Normalized: %s%n", original.getNormalized());
+            System.out.println();
         }
     }
 
@@ -246,6 +244,23 @@ public class OperatorTest {
         assertEquivalenceAndNormalization(a, b);
     }
 
+    @Test public void divisionTestNegative2() {
+        OperationResult two = new OperationResult(2);
+        OperationResult five = new OperationResult(5);
+        OperationResult eight = new OperationResult(8);
+        OperationResult fortyFour = new OperationResult(44);
+
+        // (2 - 44) / (5 - 8)
+        OperationResult a = two.apply(SUB, fortyFour).apply(DIV, five.apply(SUB, eight));
+        // 44 * (1 / (5 + -1 * 8)) * -1 + 2 * (1 / (5 + -1 * 8))
+
+        // (44 - 2) / (8 - 5)
+        OperationResult b = fortyFour.apply(SUB, two).apply(DIV, eight.apply(SUB, five));
+        // -1 * (1 / (8 + -1 * 5)) * 2 + 44 * (1 / (8 + -1 * 5))
+
+        assertEquivalenceAndNormalization(a, b);
+    }
+
     @Test
     public void divisionTestDistribute() {
         OperationResult two = new OperationResult(2);
@@ -267,5 +282,22 @@ public class OperatorTest {
         OperationResult b = new OperationResult(5).apply(MUL, new OperationResult(1).apply(DIV, 3));  // 5 * (1 / 3)
 
         assertEquivalenceAndNormalization(a, b);
+    }
+
+    @Test
+    public void dev() {
+        OperationResult a = new OperationResult(5).apply(SUB, 8);
+        System.out.println(a);
+        System.out.println(a.getNormalized());
+
+        OperationResult b = new OperationResult(8).apply(SUB, 5);
+        System.out.println(b);
+        System.out.println(b.getNormalized());
+
+
+        // 7 / ((5 - 4) / 2)
+        // 2 * (7 / (5 - 4))
+        // 2 / ((5 - 4) / 7)
+        // 2 * 7 * (5 - 4)
     }
 }
