@@ -1,7 +1,6 @@
 package operators;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -86,7 +85,6 @@ public class OperationResult implements Comparable<OperationResult> {
     }
 
     private boolean shouldWrapInParentheses(OperationResult operationResult, boolean isLeft) {
-//        if (true) return true;
         return !(operationResult.isFirst() ||
                 operationResult.operator.priority > this.operator.priority ||
                 (operationResult.operator.equals(this.operator) && operator.isCommutativeAndAssociative) ||

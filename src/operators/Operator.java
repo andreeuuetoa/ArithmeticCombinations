@@ -3,7 +3,7 @@ package operators;
 import java.util.*;
 import java.util.function.DoubleBinaryOperator;
 
-public class Operator implements DoubleBinaryOperator, Comparable<Operator> {
+public abstract class Operator implements DoubleBinaryOperator, Comparable<Operator> {
     private final DoubleBinaryOperator operator;
     public final String displayString;
     public final int priority;
@@ -23,11 +23,11 @@ public class Operator implements DoubleBinaryOperator, Comparable<Operator> {
         distributiveToOperator = operator;
     }
 
-    public boolean isDistributiveTo(Operator other) {
+    private boolean isDistributiveTo(Operator other) {
         return isDistributive() && distributiveToOperator.equals(other);
     }
 
-    public boolean isDistributive() {
+    private boolean isDistributive() {
         return Objects.nonNull(distributiveToOperator);
     }
 
@@ -107,7 +107,7 @@ public class Operator implements DoubleBinaryOperator, Comparable<Operator> {
         assert operationResult.operator != null;
         List<OperationResult> leftElements = distributiveElements(operationResult.left);
         List<OperationResult> rightElements = distributiveElements(operationResult.right);
-        if (leftElements.size() == 0 || rightElements.size() == 0) {
+        if (leftElements.isEmpty() || rightElements.isEmpty()) {
             throw new IllegalStateException();
         }
         for (OperationResult leftElement : leftElements) {
