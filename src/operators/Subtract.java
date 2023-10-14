@@ -10,7 +10,7 @@ public class Subtract extends Operator {
     }
 
     @Override
-    public OperationResult postNormalize(OperationResult operationResult, NormalizationState normalizationState) {
+    OperationResult postNormalize(OperationResult operationResult, NormalizationState normalizationState) {
         assert operationResult.left != null;
         assert operationResult.right != null;
 
