@@ -130,7 +130,7 @@ public abstract class Operator implements DoubleBinaryOperator, Comparable<Opera
         return operationResult.isNormalized;
     }
 
-    public OperationResult normalize(OperationResult operationResult, NormalizationState normalizationState) {
+    OperationResult normalize(OperationResult operationResult, NormalizationState normalizationState) {
         operationResult = preNormalize(operationResult, normalizationState);
         assertValidArgument(operationResult);
         if (shouldNotNormalize(operationResult)) return operationResult;
@@ -156,11 +156,11 @@ public abstract class Operator implements DoubleBinaryOperator, Comparable<Opera
                 .orElseThrow();
     }
 
-    protected OperationResult preNormalize(OperationResult operationResult, NormalizationState normalizationState) {
+    OperationResult preNormalize(OperationResult operationResult, NormalizationState normalizationState) {
         return operationResult;
     }
 
-    protected OperationResult postNormalize(OperationResult operationResult, NormalizationState normalizationState) {
+    OperationResult postNormalize(OperationResult operationResult, NormalizationState normalizationState) {
         return operationResult;
     }
 }
